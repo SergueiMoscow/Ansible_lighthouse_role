@@ -1,0 +1,12 @@
+---
+# handlers file for lighthouse
+- name: Reload nginx on VM
+  become: true
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+  when: ansible_connection != "docker"
+- name: Reload nginx in container
+  ansible.builtin.command: "nginx -s reload"
+  when: ansible_connection == "docker"
+  changed_when: false

@@ -1,0 +1,39 @@
+---
+# tasks file for lighthouse
+- name: Lighthouse | Install git
+  become: true
+  ansible.builtin.yum:
+    name: git
+    state: present
+- name: NGNIX | Install epel-release
+  become: true
+  ansible.builtin.yum:
+    name: epel-release
+    state: present
+- name: NGINX | Install Nginx
+  become: true
+  ansible.builtin.yum:
+    name: nginx
+    state: present
+- name: NGINX | General config
+  become: true
+  ansible.builtin.template:
+    src: templates/nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    mode: '0644'
+- name: NGINX | Start in container
+  ansible.builtin.command: nginx
+  when: ansible_connection == "docker"
+  register: nginx_start_result
+  changed_when: false
+  failed_when: "nginx_start_result.rc not in [0, 1]"
+
+- name: Lighthouse | Copy from git
+  become: true
+  ansible.builtin.git:
+    repo: "{{ lighthouse_git }}"
+    version: master
+    dest: "{{ lighthouse_dir }}"
+  notify:
+    - Reload nginx on VM
+    - Reload nginx in container
